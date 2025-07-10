@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from app.homepage import homepage
 from app.post import post
+from app.user import user
 from app.database import database
 
 
@@ -15,5 +16,5 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(homepage.router)
 app.include_router(post.router)
-
+app.include_router(user.router)
 

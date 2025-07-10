@@ -14,7 +14,7 @@ async def get_posts(session: database.SessionDep):
     query = select(models.Post)
     result = await session.scalars(query)
     # result = await session.execute(text("""
-    #     select post_id, user_id created_at, title, content
+    #     select post_id, title, content
     #     from post
     # """))
     return result.all()
@@ -31,8 +31,7 @@ async def get_post(index: int, session: database.SessionDep):
 async def add_post(post: PostCreateSchema, session: database.SessionDep):
     new_post = models.Post(
         title=post.title,
-        content=post.content,
-        user_id=post.user_id
+        content=post.content
     )
     session.add(new_post)
     await session.commit()
