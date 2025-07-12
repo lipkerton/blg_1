@@ -10,7 +10,8 @@ router = APIRouter()
 @router.post("/user")
 async def add_user(user: UserCreateSchema, session: database.SessionDep):
     new_user = models.User(
-        username = user.username
+        username = user.username,
+        email = user.email
     )
     session.add(new_user)
     await session.commit()
