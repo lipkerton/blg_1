@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
 
-class UserSchema(BaseModel):
+class UserGetSchema(BaseModel):
     user_id: int
     username: str
     email: EmailStr | None = None
@@ -12,4 +12,5 @@ class UserSchema(BaseModel):
 
 class UserCreateSchema(BaseModel):
     username: str
+    password: str
     email: EmailStr | None = None

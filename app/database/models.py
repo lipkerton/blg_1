@@ -12,6 +12,7 @@ class User(Base):
 
     user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     username: Mapped[str] = mapped_column(String(200), unique=True)
+    password: Mapped[str] = mapped_column(String(200))
     email: Mapped[str | None] = mapped_column(String(200), unique=True, default=None)
 
     __table_args__ = (
