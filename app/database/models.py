@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from secrets import token_hex
 
 from sqlalchemy import TIMESTAMP, BigInteger, String, Text, CheckConstraint, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -13,11 +14,18 @@ class User(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     username: Mapped[str] = mapped_column(String(200), unique=True)
     password: Mapped[str] = mapped_column(String(200))
-    email: Mapped[str | None] = mapped_column(String(200), unique=True, default=None)
-
+    email: Mapped[str | None] = mapped_column(
+        String(200), unique=True, default=None
+    )
+    static_token: Mapped[str] = mapped_column(
+        String(200), unique=True, default=token_hex(16)
+    )
+   
     __table_args__ = (
         CheckConstraint("length(username) > 0", name="chk_length_username"),
     )
+
+
 
 class Post(Base):
     __tablename__ = "posts"

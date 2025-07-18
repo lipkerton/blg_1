@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     POSTGRES_DB_PASS: str
     POSTGRES_DB_PORT: int
 
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+
     @property
     def POSTGRES_URL(self):
         return f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASS}@{self.POSTGRES_DB_HOST}:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"

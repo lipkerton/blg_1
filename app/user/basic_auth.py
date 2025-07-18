@@ -2,10 +2,11 @@ from typing import Annotated
 
 from sqlalchemy import select, update
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from ..database import database, models
+
 
 security = HTTPBasic()
 pwd_context = CryptContext(
@@ -58,4 +59,3 @@ async def credentials_check(
             return credentials
         raise unauthed_exc
     raise unauthed_exc
-
