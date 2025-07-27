@@ -1,16 +1,21 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 # from sqlalchemy.sql import text
 
 from .schemas import PostCreateSchema, PostGetSchema
 from ..database import database, models
+from ..user.jwt_token_auth import token_check
 
 
 router = APIRouter()
 
 
 @router.get("/p", response_model=list[PostGetSchema])
-async def get_posts(session: database.SessionDep):
+async def get_posts(
+    session: database.SessionDep,
+):
     query = select(
         models.Post.post_id,
         models.User.username,
@@ -25,7 +30,10 @@ async def get_posts(session: database.SessionDep):
 
 
 @router.get("/p/{index:int}", response_model=PostGetSchema)
-async def get_post(index: int, session: database.SessionDep):
+async def get_post(
+    index: int,
+    session: database.SessionDep
+):
     query = select(
         models.Post.post_id,
         models.User.username,
@@ -41,7 +49,11 @@ async def get_post(index: int, session: database.SessionDep):
 
 
 @router.post("/p")
-async def add_post(post: PostCreateSchema, session: database.SessionDep):
+async def add_post(
+    post: PostCreateSchema,
+    session: database.SessionDep,
+    credentials: Annotated[dict, Depends(token_check)]
+):
     new_post = models.Post(
         title=post.title,
         content=post.content,

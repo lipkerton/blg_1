@@ -29,7 +29,6 @@ async def login(
 @router.get("/user", response_model=list[UserGetSchema])
 async def get_users(
     session: database.SessionDep,
-    credentials: Annotated[dict, Depends(token_check)]
 ):
     query = select(
         models.User.user_id,
