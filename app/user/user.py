@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBasicCredentials
 
@@ -85,5 +85,5 @@ async def delete_user(
         models.User.username == username
     )
     result = await session.execute(query)
-    session.commit()
+    await session.commit()
 
