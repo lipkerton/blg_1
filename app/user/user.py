@@ -29,6 +29,7 @@ async def login(
 @router.get("/user", response_model=list[UserGetSchema])
 async def get_users(
     session: database.SessionDep,
+    credentials: Annotated[dict, Depends(token_check)]
 ):
     query = select(
         models.User.user_id,
@@ -39,10 +40,11 @@ async def get_users(
     return result.all()
 
 
-@router.get("/user/{index:int}", response_model=UserGetSchema)
+@router.get("/user/{username:str}", response_model=UserGetSchema)
 async def get_user(
-    index: int,
+    username: str,
     session: database.SessionDep,
+    credentials: Annotated[dict, Depends(token_check)]
 ):
     query = select(
         models.User.user_id,
@@ -50,7 +52,7 @@ async def get_user(
         models.User.email,
     )
     query = query.where(
-        models.User.user_id == index
+        models.User.username == username
     )
     result = await session.execute(query)
     return result.one()
@@ -71,3 +73,17 @@ async def add_user(
     )
     session.add(new_user)
     await session.commit()
+
+
+@router.delete("/user/{username:str}")
+async def delete_user(
+    username: str,
+    session: database.SessionDep,
+    credentials: Annotated[dict, Depends(token_check)]
+):
+    query = delete(models.User).where(
+        models.User.username == username
+    )
+    result = await session.execute(query)
+    session.commit()
+
