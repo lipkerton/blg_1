@@ -24,7 +24,6 @@ def test_create_user(socket):
     assert response.status_code == 200
 
 
-@pytest.mark.asyncio
 async def test_check_new_user_db(session):
     hashed_password = password.get_password_hash(user["password"])
     query = f"""
@@ -50,7 +49,6 @@ async def test_check_new_user_db(session):
         init_email: {user["email"]}."""
 
 
-@pytest.mark.asyncio
 async def test_login(socket):
     endpoint = "/login"
     basic_auth = HTTPBasicAuth(user["username"], user["password"])
@@ -62,7 +60,6 @@ async def test_login(socket):
     token._token = response.json()
 
 
-@pytest.mark.asyncio
 async def test_get_users(socket):
     response = requests.get(
         f"{socket}{endpoint}",
