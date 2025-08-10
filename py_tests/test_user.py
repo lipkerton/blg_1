@@ -81,7 +81,8 @@ def test_login(socket):
         auth=basic_auth
     )
     assert response.status_code == 200, \
-        f"Логин не удался. Кредиты: {user.username}, {user.password}"
+        f"""Логин не удался. Кредиты:
+        {user.username}, {user.password}"""
     token._token = response.json()
 
 
