@@ -2,7 +2,6 @@ import json
 from collections import namedtuple
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import text
 from sqlalchemy.exc import NoResultFound
 import requests
@@ -116,6 +115,40 @@ def test_get_user(socket):
         user_username: {user.email}."""
 
 
+def test_anon_get_users(socket):
+    response = requests.get(
+        f"{socket}{endpoint}",
+    )
+    assert response.status_code == 403, \
+        f"""Анонимный пользователь имеет доступ к
+        списку всех пользователей: {socket}{endpoint}.
+        HTTP-метод: GET."""
+
+
+def test_anon_get_user(socket):
+    username_path_param = f"/{user.username}"
+    response = requests.get(
+        f"{socket}{endpoint}{username_path_param}"
+    )
+    assert response.status_code == 403, \
+        f"""Анонимный пользователь имеет доступ к 
+        профилю зарегистрированного пользователя:
+        {socket}{endpoint}{username_path_param}.
+        HTTP-метод: GET."""
+
+
+def test_anon_delete_user(socket):
+    username_path_param = f"/{user.username}"
+    response = requests.delete(
+        f"{socket}{endpoint}{username_path_param}"
+    )
+    assert response.status_code == 403, \
+        f"""Анонимный пользователь имеет доступ к 
+        возможности удалить пользователя:
+        {socket}{endpoint}{username_path_param}.
+        HTTP-метод: DELETE."""
+
+
 def test_del_user(socket):
     username_path_param = f"/{user.username}"
     response = requests.delete(
@@ -137,3 +170,4 @@ def test_check_deleted_user_db(db_user):
             f"""После удаления данные пользователя в БД:
             {db_user}."""
         )
+

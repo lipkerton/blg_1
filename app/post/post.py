@@ -62,3 +62,15 @@ async def add_post(
     session.add(new_post)
     await session.commit()
 
+
+@router.delete("/p/{index:int}")
+async def delete_post(
+    index: int,
+    session: database.SessionDep,
+    credentials: Annotated[dict, Depends(token_check)]
+):
+    query = delete(models.User).where(
+        models.Post.post_id == index
+    )
+    result = await session.execute(query)
+    await session.commit()
