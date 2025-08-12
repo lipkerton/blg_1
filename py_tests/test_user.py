@@ -16,7 +16,6 @@ pytestmark = pytest.mark.user
 endpoint = "/user"
 User = namedtuple("User", ["username", "password", "email"])
 user = User("steve", "123456", "stevevach@gmail.com")
-
 user_json = json.dumps(user._asdict())
 
 
@@ -29,7 +28,7 @@ async def db_user(session):
             and email = '{user.email}';
     """
     result = await session.execute(text(query))
-    return result
+    yield result
 
 
 def test_create_user(socket):
@@ -38,40 +37,60 @@ def test_create_user(socket):
         headers={"Content-Type": "application/json"},
         data=user_json
     )
-    assert response.status_code == 200
+    message_create_user_error = (
+        "Не удалось создать пользователя."
+        f"username: {user.username}"
+        f"email: {user.email}"
+        f"password: {user.password}"
+        f"response: {response.status_code}"
+    )
+    assert response.status_code == 200, message_create_user_error
 
 
 def test_check_new_user_db(db_user):
     hashed_password = password.get_password_hash(user.password)
 
+    message_not_found_user_error = (
+        f"После создания пользователь {user.username}, {user.email}"
+        "отсутствует в БД.\n{error}"
+    )
+
+    message_type_user_error = (
+        f"Запрос к БД по параметрам {user.username}, {user.email}"
+        "не удался: вернулся неполный результат.\n{error}"
+    )
+    message_no_result_user_error = (
+        "Запрос к БД по параметрам {user.username}, {user.email}"
+        "не удался: вернулся пустой результат.\n{error}"
+    )
+    message_username_user_error = (
+        "Не совпадает имя пользовтаеля.\n"
+        "db_username: {db_user.username}\n"
+        f"init_username: {user.username}"
+    )
+    message_password_user_error = (
+        "Не совпадают пароли.\n"
+        "db_password: {db_user.password}\n"
+        f"init_password: {hashed_password}"
+    )
+    message_email_user_error = (
+        "Не совпадают адреса эл.почты.\n"
+        "db_username: {db_user.email}\n"
+        f"init_username: {user.email}"
+    )
+
     try:
         db_user = User._make(db_user.one())
     except TypeError as error:
-        raise f"""
-            Запрос к БД по параметрам {user.username}, {user.email}
-            не удался: вернулся неполный результат.
-            {error}.
-        """
+        raise message_type_user_error.format(error)  
     except NoResultFound as error:
-        raise f"""
-            Запрос к БД по параметрам {user.username}, {user.email}
-            не удался: вернулся пустой результат.
-            {error}.
-        """
-
+        raise message_no_result_user_error.format(error)
     assert db_user.username == user.username, \
-        f"""Не совпадает имя пользовтаеля.
-        db_username: {db_user.username},
-        init_username: {user.username}."""
+        message_username_user_error.format(db_user.username)
     assert password.verify_password(user.password, db_user.password), \
-        f"""Не сопадают пароли.
-        db_password: {db_user.password},
-        init_password: {hashed_password}."""
+        message_password_user_error.format(db_user.password)
     assert db_user.email == user.email, \
-        f"""Не совпадают адреса эл.почты.
-        db_email: {db_user.email},
-        init_email: {user.email}."""
-
+        message_email_error.format(db_user.email)
 
 def test_login(socket):
     endpoint = "/login"
@@ -156,8 +175,16 @@ def test_del_user(socket):
         f"{socket}{endpoint}{username_path_param}",
         headers={"Authorization": token.token}
     )
-    assert response.status_code == 200, \
+
+    message_delete_user_error = (
         "Не удалось удалить пользователя."
+        f"username: {user.username}"
+        f"email: {user.email}"
+        f"password: {user.password}"
+        f"response: {response.status_code}"
+    )
+    assert response.status_code == 200, \
+        message_delete_user_error
 
 
 def test_check_deleted_user_db(db_user):
