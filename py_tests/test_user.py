@@ -7,7 +7,7 @@ from sqlalchemy.exc import NoResultFound
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .setup import password, token
+from .conftest import password, token
 from ..app.user import schemas
 
 

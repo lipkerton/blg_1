@@ -5,105 +5,103 @@ import pytest
 import requests
 from sqlalchemy import text
 
-from .setup import password, token
+from .conftest import password, token
 
 
 endpoint = "/p"
-Post = namedtuple("Post", ["title", "content", "user_id"])
+Post = namedtuple("Post", ["user_id", "title", "content"])
 
 User = namedtuple("User", ["username", "email", "password"])
 user = User("steve", "stevevach@gmail.com", "123456")
 user_json = json.dumps(user._asdict())
 
+error_user_message_info = (
+    f"username: {user.username}\n"
+    f"email: {user.email}\n"
+    f"password: {user.password}\n"
+    "response: {response.status_code}\n"
+)
 
 @pytest.fixture(scope="module", autouse=True)
-def make_user(socket):
+def make_user():
     
     endpoint_user = "/user"
     endpoint_login = "/login"
+
+    socket = f"http://127.0.0.1:8000"
 
     response = requests.post(
        f"{socket}{endpoint_user}",
        headers={"Content-Type": "application/json"},
        data=user_json
     )
-    message_create_user_error = (
-        "Не удалось создать пользователя."
-        f"username: {user.username}"
-        f"email: {user.email}"
-        f"password: {user.password}"
-        f"response: {response.status_code}"
+    assert response.status_code == 200, (
+        "Не удалось создать пользователя.\n",
+        error_user_message_info.format(response.status_code)
     )
-    assert response.status_code == 200, create_error_user_message
-    
     basic_auth = requests.auth.HTTPBasicAuth(user.username, user.password)
     response = requests.post(
         f"{socket}{endpoint_login}",
         auth=basic_auth
     )
-    message_entry_user_error = (
-        "Не удалось выполнить вход пользователем."
-        f"username: {user.username}"
-        f"email: {user.email}"
-        f"password: {user.password}"
-        f"response: {response.status_code}"
+    assert response.status_code == 200, (
+        "Не удалось выполнить вход пользователем.\n",
+        error_user_message_info.format(response.status_code)
     )
-    assert response.status_code == 200, message_entry_user_error
+
     token._token = response.json()
 
     yield
-
+    
+    username_path_param = f"/{user.username}"
     response = requests.delete(
-        f"{socket}{endpoint}",
+        f"{socket}{endpoint_user}{username_path_param}",
         headers={"Authorization": token.token}
     )
-    message_delete_user_error = (
-        "Не удалось удалить пользователя."
-        f"username: {user.username}"
-        f"email: {user.email}"
-        f"password: {user.password}"
-        f"response: {response.status_code}"
+    assert response.status_code == 200, (
+        "Не удалось удалить пользователя.\n",
+        error_user_message_info.format(response.status_code)
     )
-    assert response.status_code == 200, message_delete_user_error
 
 
 class TestPost:
-    
-    @pytest.fixture(scope="class")
-    async def post(session):
+
+    error_post_message_info = (
+        "Status code: {reponse.status_code}"
+    )
+
+    @pytest.fixture
+    async def post(cls, session):
         query = f"""
             select user_id
             from users
             where 
-                username = {user.username}
-                and email = {user.email}
+                username = '{user.username}'
+                and email = '{user.email}'
         """
         result = await session.execute(text(query))
-        result = result.one()
-        user_id = result.get("user_id", None)
-        message_get_user_id_error = (
-            "Не удалось получить идентификатор пользователя."
-            f"username: {user.username}"
-            f"email: {user.email}"
-            f"password: {user.password}"
-            f"query: {query}"
+        user_id, *_ = result.one()
+        assert user_id, (
+            "Не удалось получить идентификатор пользователя.\n",
+            error_user_message_info.format(None)
         )
-        assert user_id, get_user_id_error
-        
-        yield Post("Тестовый пост (заголовок)", "Тело тестового поста", user_id)
+        yield Post(
+            user_id,
+            "Мой первый пост!",
+            "Содержимое моего первого поста."
+        )   
 
-    async def test_add_post(socket, post):
+    async def test_add_post(cls, socket, post):
         post_json = json.dumps(post._asdict())
         response = requests.post(
-            f"{socket}{endpoint}"
+            f"{socket}{endpoint}",
             headers={
                 "Authorization": token.token,
                 "Content-Type": "application/json"
             },
             data=post_json
         )
-        message_add_post_error = (
-            "Не удалось добавить пост.\n"
-            "Status code: {response.status_code}"
+        assert response.status_code == 200, (
+            "Не удалось добавить пост.\n",
+            error_post_message_info.format(response.status_code)
         )
-        assert response.status_code == 200, message_add_post_error
