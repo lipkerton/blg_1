@@ -1,26 +1,43 @@
+"""
+Тесты для проверки работы всего, что касается юзеров.
+Реализовано:
+1) Проверка добавления пользователя (+ проверка добавления в БД).
+2) Проверка логина.
+3) Проверка корректной работы эндопинтов на
+получение пользователя/списка пользователей.
+4) Проверка корректного удаления пользователя.
+5) Проверка прав доступа анонимного пользователя.
+"""
 import json
 from collections import namedtuple
 
 import pytest
+import requests
 from sqlalchemy import text
 from sqlalchemy.exc import NoResultFound
-import requests
-from requests.auth import HTTPBasicAuth
 
-from .conftest import password, token
-from ..app.user import schemas
+from .conftest import TIMEOUT, password, token, socket
 
 
 pytestmark = pytest.mark.user
 
-endpoint = "/user"
+ENDPOINT = "/user"
 User = namedtuple("User", ["username", "password", "email"])
 user = User("steve", "123456", "stevevach@gmail.com")
 user_json = json.dumps(user._asdict())
 
+ERROR_USER_MESSAGE_INFO = (
+    f"username: {user.username}\n"
+    f"email: {user.email}\n"
+    f"password: {user.password}\n"
+    "response: {response.status_code}\n"
+)
 
-@pytest.fixture(scope="function")
-async def db_user(session):
+@pytest.fixture(name="db_user")
+async def get_db_user(session):
+    """
+    Фиксура должна отдавать пользователя из БД.
+    """
     query = f"""
         select username, password, email from users
         where
@@ -31,84 +48,89 @@ async def db_user(session):
     yield result
 
 
-def test_create_user(socket):
+def test_create_user():
+    """
+    Тест высылает POST-запрос на эндпоинт
+    `/user` с данными для создания пользователя.
+    """
     response = requests.post(
-        f"{socket}{endpoint}",
+        f"{socket.socket}{ENDPOINT}",
         headers={"Content-Type": "application/json"},
-        data=user_json
+        data=user_json,
+        timeout=TIMEOUT
     )
-    message_create_user_error = (
-        "Не удалось создать пользователя."
-        f"username: {user.username}"
-        f"email: {user.email}"
-        f"password: {user.password}"
-        f"response: {response.status_code}"
+    assert response.status_code == 200, (
+        "Не удалось создать пользователя.\n",
+        ERROR_USER_MESSAGE_INFO.format(response.status_code)
     )
-    assert response.status_code == 200, message_create_user_error
 
 
 def test_check_new_user_db(db_user):
+    """
+    Проверяем наличие созданного пользователя в БД.
+    """
     hashed_password = password.get_password_hash(user.password)
-
-    message_not_found_user_error = (
-        f"После создания пользователь {user.username}, {user.email}"
-        "отсутствует в БД.\n{error}"
-    )
-
-    message_type_user_error = (
-        f"Запрос к БД по параметрам {user.username}, {user.email}"
-        "не удался: вернулся неполный результат.\n{error}"
-    )
-    message_no_result_user_error = (
-        "Запрос к БД по параметрам {user.username}, {user.email}"
-        "не удался: вернулся пустой результат.\n{error}"
-    )
-    message_username_user_error = (
-        "Не совпадает имя пользовтаеля.\n"
-        "db_username: {db_user.username}\n"
-        f"init_username: {user.username}"
-    )
-    message_password_user_error = (
-        "Не совпадают пароли.\n"
-        "db_password: {db_user.password}\n"
-        f"init_password: {hashed_password}"
-    )
-    message_email_user_error = (
-        "Не совпадают адреса эл.почты.\n"
-        "db_username: {db_user.email}\n"
-        f"init_username: {user.email}"
-    )
 
     try:
         db_user = User._make(db_user.one())
     except TypeError as error:
-        raise message_type_user_error.format(error)  
+        raise TypeError(
+            "Запрос не удался: вернулся неполный результат.\n",
+            ERROR_USER_MESSAGE_INFO.format(
+                "Это был прямой запрос в БД."
+            )
+        ) from error
     except NoResultFound as error:
-        raise message_no_result_user_error.format(error)
-    assert db_user.username == user.username, \
-        message_username_user_error.format(db_user.username)
-    assert password.verify_password(user.password, db_user.password), \
-        message_password_user_error.format(db_user.password)
-    assert db_user.email == user.email, \
-        message_email_error.format(db_user.email)
+        raise NoResultFound(
+            "Запрос не удался: вернулся пустой результат.\n",
+            ERROR_USER_MESSAGE_INFO.format(
+                "Это был прямой запрос в БД."
+            )
+        ) from error
+    assert db_user.username == user.username, (
+        "Не совпадает имя пользовтаеля.\n",
+        f"db_username: {db_user.username}\n",
+        f"init_username: {user.username}\n"
+    )
+    assert password.verify_password(user.password, db_user.password), (
+        "Не совпадают пароли.\n",
+        f"db_password: {db_user.password}\n",
+        f"init_password: {hashed_password}\n"
+    )
+    assert db_user.email == user.email, (
+        "Не совпадают эл.почты.\n"
+        f"db_password: {db_user.password}\n"
+        f"init_password: {hashed_password}\n"
+    )
 
-def test_login(socket):
+def test_login():
+    """
+    Тест высылает POST-запрос на эндпоинт
+    `/login` с логином-паролем для входа.
+    """
     endpoint = "/login"
-    basic_auth = HTTPBasicAuth(user.username, user.password)
     response = requests.post(
-        f"{socket}{endpoint}",
-        auth=basic_auth
+        f"{socket.socket}{endpoint}",
+        auth=(user.username, user.password),
+        timeout=TIMEOUT
     )
     assert response.status_code == 200, \
         f"""Логин не удался. Кредиты:
         {user.username}, {user.password}"""
-    token._token = response.json()
+    token.token = response.json()
 
 
-def test_get_users(socket):
+def test_get_users():
+    """
+    Тест высылает GET-запрос на эндпоинт
+    `/user`, чтобы получить список пользователей.
+    Это защищенный эндпоинт, поэтому к запросу
+    добавляем токен, полученный на логине.
+    """
     response = requests.get(
-        f"{socket}{endpoint}",
-        headers={"Authorization": token.token}
+        f"{socket.socket}{ENDPOINT}",
+        headers={"Authorization": token.token},
+        timeout=TIMEOUT
     )
     assert response.status_code == 200, \
         "Не удалось получить список пользователей."
@@ -116,64 +138,89 @@ def test_get_users(socket):
         "Список пользователей пуст."
 
 
-def test_get_user(socket):
+def test_get_user():
+    """
+    Тест высылает GET-запрос на эндпоинт
+    `/user`, чтобы получить пользователя.
+    Это защищенный эндпоинт, поэтому к запросу
+    добавляем токен, полученный на логине.
+    """
     username_path_param = f"/{user.username}"
     response = requests.get(
-        f"{socket}{endpoint}{username_path_param}",
-        headers={"Authorization": token.token}
+        f"{socket.socket}{ENDPOINT}{username_path_param}",
+        headers={"Authorization": token.token},
+        timeout=TIMEOUT
     )
     assert response.status_code == 200, \
         "Не удалось получить пользователя."
     result = response.json()
-    assert result["username"] == user.username, \
-        f"""Имя пользователя не совпадает.
-        result_username: {result['username']},
-        user_username: {user.username}."""
-    assert result["email"] == user.email, \
-        f"""Почта пользователя не совпадает.
-        result_email: {result['email']},
-        user_username: {user.email}."""
-
-
-def test_anon_get_users(socket):
-    response = requests.get(
-        f"{socket}{endpoint}",
+    assert result["username"] == user.username, (
+        f"Имя пользователя не совпадает.\n"
+        f"result_username: {result['username']}\n",
+        f"user_username: {user.username}.\n"
     )
-    assert response.status_code == 403, \
-        f"""Анонимный пользователь имеет доступ к
-        списку всех пользователей: {socket}{endpoint}.
-        HTTP-метод: GET."""
+    assert result["email"] == user.email, (
+        f"Почта пользователя не совпадает.\n"
+        f"result_email: {result['email']}\n",
+        f"user_username: {user.email}.\n"
+    )
 
 
-def test_anon_get_user(socket):
+def test_anon_get_users():
+    """
+    Провека доступа анонима (без токена) к GET `/user`.
+    """
+    response = requests.get(
+        f"{socket.socket}{ENDPOINT}",
+        timeout=TIMEOUT
+    )
+    assert response.status_code == 403, (
+        f"Аноним не должен получать доступ к {socket.socket}{ENDPOINT}.\n",
+        "HTTP-метод: GET."
+    )
+
+
+def test_anon_get_user():
+    """
+    Проверка доступ анонима (без токена) к GET `/user/{username}`.
+    """
     username_path_param = f"/{user.username}"
     response = requests.get(
-        f"{socket}{endpoint}{username_path_param}"
+        f"{socket.socket}{ENDPOINT}{username_path_param}",
+        timeout=TIMEOUT
     )
-    assert response.status_code == 403, \
-        f"""Анонимный пользователь имеет доступ к 
-        профилю зарегистрированного пользователя:
-        {socket}{endpoint}{username_path_param}.
-        HTTP-метод: GET."""
+    assert response.status_code == 403, (
+        f"Аноним не должен получать доступ к {socket.socket}{ENDPOINT}",
+        "HTTP-метод: GET."
+    )
 
 
-def test_anon_delete_user(socket):
+def test_anon_delete_user():
+    """
+    Проверка доступ анонима (без токена) к DELETE `/user/{username}`.
+    """
     username_path_param = f"/{user.username}"
     response = requests.delete(
-        f"{socket}{endpoint}{username_path_param}"
+        f"{socket.socket}{ENDPOINT}{username_path_param}",
+        timeout=TIMEOUT
     )
-    assert response.status_code == 403, \
-        f"""Анонимный пользователь имеет доступ к 
-        возможности удалить пользователя:
-        {socket}{endpoint}{username_path_param}.
-        HTTP-метод: DELETE."""
+    assert response.status_code == 403, (
+        f"Аноним не должен получать доступ к {socket.socket}{ENDPOINT}",
+        "HTTP-метод: DELETE."
+    )
 
-
-def test_del_user(socket):
+def test_del_user():
+    """
+    Тест высылает DELETE-запрос на эндпоинт
+    `/user/{username}`, чтобы удалить пользователя.
+    Это защищенный эндпоинт, поэтому к запросу
+    добавляем токен, полученный на логине.
+    """
     username_path_param = f"/{user.username}"
     response = requests.delete(
-        f"{socket}{endpoint}{username_path_param}",
-        headers={"Authorization": token.token}
+        f"{socket.socket}{ENDPOINT}{username_path_param}",
+        headers={"Authorization": token.token},
+        timeout=TIMEOUT
     )
 
     message_delete_user_error = (
@@ -188,7 +235,9 @@ def test_del_user(socket):
 
 
 def test_check_deleted_user_db(db_user):
-
+    """
+    Проверяем, что пользователь удалился из БД.
+    """
     try:
         db_user.one()
     except NoResultFound:
@@ -198,4 +247,3 @@ def test_check_deleted_user_db(db_user):
             f"""После удаления данные пользователя в БД:
             {db_user}."""
         )
-

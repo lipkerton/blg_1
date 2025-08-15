@@ -1,5 +1,5 @@
 """
-
+Тесты для проверки работы постов.
 """
 import json
 from collections import namedtuple
