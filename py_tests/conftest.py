@@ -56,6 +56,13 @@ class Token:
             token_type = self._token.get("token_type", None)
             access_token = self._token.get("access_token", None)
             return f'{token_type} {access_token}'
+    
+    @token.setter
+    def token(self, value):
+        """
+        Задаем значение токену.
+        """
+        self._token = value
 
 
 class Socket:
@@ -87,5 +94,8 @@ async def session():
             yield session_m
 
 
+socket = Socket()
 password = Password()
 token = Token()
+
+TIMEOUT = 300
