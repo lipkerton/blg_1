@@ -1,3 +1,12 @@
+"""
+Методы и эндпоинты, которые связаны с юзерами.
+Сделано:
+1) Метод для создания пользователя
+2) Метод для логина пользователя.
+3) Метод для получения списка пользователей.
+4) Метод для получения конкретного пользователя.
+5) Метод для удаления пользователя.
+"""
 from typing import Annotated
 
 from sqlalchemy import select, delete
@@ -12,11 +21,18 @@ from ..database import database, models
 
 router = APIRouter()
 
+CredentialsBasic = Annotated[HTTPBasicCredentials, Depends(credentials_check)]
+CredentialsToken = Annotated[dict, Depends(token_check)]
+
 
 @router.post("/login", response_model=Token)
 async def login(
-    credentials: Annotated[HTTPBasicCredentials, Depends(credentials_check)]
+    credentials: CredentialsBasic
 ):
+    """
+    Проверяем юзернейм и пароль,
+    если они подходят - возвращаем токен.
+    """
     jwt_token = create_jwt_token(
         {
         "username": credentials.username,
@@ -29,8 +45,11 @@ async def login(
 @router.get("/user", response_model=list[UserGetSchema])
 async def get_users(
     session: database.SessionDep,
-    credentials: Annotated[dict, Depends(token_check)]
+    credentials: CredentialsToken  # pylint: disable=unused-argument
 ):
+    """
+    Через SELECT получаем всех пользователей.
+    """
     query = select(
         models.User.user_id,
         models.User.username,
@@ -44,8 +63,12 @@ async def get_users(
 async def get_user(
     username: str,
     session: database.SessionDep,
-    credentials: Annotated[dict, Depends(token_check)]
+    credentials: CredentialsToken  # pylint: disable=unused-argument
 ):
+    """
+    Через SELECT получем пользователя
+    с юзернеймом из параметра пути.
+    """
     query = select(
         models.User.user_id,
         models.User.username,
@@ -63,6 +86,9 @@ async def add_user(
     user: UserCreateSchema,
     session: database.SessionDep
 ):
+    """
+    Добавляем нового юзера в БД.
+    """
     hashed_password = get_password_hash(
         user.password
     )
@@ -79,11 +105,14 @@ async def add_user(
 async def delete_user(
     username: str,
     session: database.SessionDep,
-    credentials: Annotated[dict, Depends(token_check)]
+    credentials: CredentialsToken  # pylint: disable=unused-argument
 ):
+    """
+    Удаляем пользователя с юзернеймом
+    из параметра пути.
+    """
     query = delete(models.User).where(
         models.User.username == username
     )
-    result = await session.execute(query)
+    await session.execute(query)
     await session.commit()
-
