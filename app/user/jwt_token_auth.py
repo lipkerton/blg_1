@@ -11,6 +11,7 @@ from fastapi.security import HTTPBearer
 from sqlalchemy import select
 
 from app.config import settings
+from .schemas import UserGetSchema
 from ..database import database, models
 
 security = HTTPBearer()
@@ -80,7 +81,10 @@ async def token_check(
     if payload:
         query = select(
             models.User
-        ).where(models.User.username == payload.username)
+        ).where(
+            models.User.username == payload.get("username")
+        )
         user = await session.execute(query)
-        return user.one()
+        user = UserGetSchema.model_validate(user.one())
+        return user
     raise unauthed_exc

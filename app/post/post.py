@@ -1,7 +1,15 @@
+"""
+Методы и эндпоинты, которые связаны с юзерами.
+Сделано:
+1) Метод для создания поста.
+3) Метод для получения списка постов.
+4) Метод для получения конкретного поста.
+5) Метод для удаления поста.
+"""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from .schemas import PostCreateSchema, PostGetSchema
 from ..database import database, models
@@ -9,6 +17,8 @@ from ..user.jwt_token_auth import token_check
 
 
 router = APIRouter()
+
+CredentialsToken = Annotated[dict, Depends(token_check)]
 
 
 @router.get("/p", response_model=list[PostGetSchema])
@@ -49,7 +59,7 @@ async def get_post(
         models.Post.content
     )
     query = query.join(models.User, models.Post.user_id == models.User.user_id)
-    query = query.where(models.Post.post_id == index) 
+    query = query.where(models.Post.post_id == index)
     result = await session.execute(query)
     return result.one()
 
@@ -58,7 +68,7 @@ async def get_post(
 async def add_post(
     post: PostCreateSchema,
     session: database.SessionDep,
-    credentials: Annotated[dict, Depends(token_check)]
+    user: CredentialsToken
 ):
     """
     Добавляем новый пост в БД.
@@ -66,7 +76,7 @@ async def add_post(
     new_post = models.Post(
         title=post.title,
         content=post.content,
-        user_id=post.user_id
+        user_id=user.user_id  # type: ignore
     )
     session.add(new_post)
     await session.commit()
@@ -76,10 +86,18 @@ async def add_post(
 async def delete_post(
     index: int,
     session: database.SessionDep,
-    credentials: Annotated[dict, Depends(token_check)]
+    user: CredentialsToken
 ):
-    query = delete(models.User).where(
-        models.Post.post_id == index
+    """
+    Удаляем пост с идентификатором
+    из параметра пути.
+    Но только если такой пост был написан
+    пользователем, который отправил запрос на
+    удаление.
+    """
+    query = delete(models.Post).where(
+        models.Post.post_id == index,
+        models.Post.user_id == user.user_id  # type: ignore
     )
-    result = await session.execute(query)
+    await session.execute(query)
     await session.commit()

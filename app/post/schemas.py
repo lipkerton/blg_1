@@ -1,3 +1,6 @@
+"""
+Pydantic модели для post.py
+"""
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
