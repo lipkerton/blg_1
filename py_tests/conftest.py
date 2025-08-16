@@ -56,7 +56,7 @@ class Token:
             token_type = self._token.get("token_type", None)
             access_token = self._token.get("access_token", None)
             return f'{token_type} {access_token}'
-    
+
     @token.setter
     def token(self, value):
         """

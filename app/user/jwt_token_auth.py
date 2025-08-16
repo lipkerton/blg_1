@@ -80,7 +80,9 @@ async def token_check(
 
     if payload:
         query = select(
-            models.User
+            models.User.user_id,
+            models.User.username,
+            models.User.email
         ).where(
             models.User.username == payload.get("username")
         )

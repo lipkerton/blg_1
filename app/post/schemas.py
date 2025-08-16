@@ -19,7 +19,5 @@ class PostGetSchema(BaseModel):
 
 
 class PostCreateSchema(BaseModel):
-    user_id: int
     title: str
     content: str
-    
