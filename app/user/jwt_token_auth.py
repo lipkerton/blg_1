@@ -8,9 +8,10 @@ from datetime import datetime, timezone, timedelta
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
+from sqlalchemy import select
 
 from app.config import settings
-
+from ..database import database, models
 
 security = HTTPBearer()
 
@@ -57,13 +58,16 @@ def verify_jwt_token(jwt_token: str) -> dict | None:
         return None
 
 
-def token_check(
-    credentials: CredentialsSecurity
+async def token_check(
+    credentials: CredentialsSecurity,
+    session: database.SessionDep
 ):
     """
     Эта функция нужна, чтобы сделать зависимость с ней
     из user-методов - она получает кредиты и отправляет
     токен на проверку.
+    Если проверка прошла успешно, то функция возвращает
+    объект юзера из БД.
     """
     unauthed_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -72,6 +76,11 @@ def token_check(
     )
     jwt_token = credentials.credentials  # type: ignore
     payload = verify_jwt_token(jwt_token)
+
     if payload:
-        return payload
+        query = select(
+            models.User
+        ).where(models.User.username == payload.username)
+        user = await session.execute(query)
+        return user.one()
     raise unauthed_exc

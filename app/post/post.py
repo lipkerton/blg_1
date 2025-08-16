@@ -2,7 +2,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
-# from sqlalchemy.sql import text
 
 from .schemas import PostCreateSchema, PostGetSchema
 from ..database import database, models
@@ -16,6 +15,9 @@ router = APIRouter()
 async def get_posts(
     session: database.SessionDep,
 ):
+    """
+    Через SELECT получаем все посты.
+    """
     query = select(
         models.Post.post_id,
         models.User.username,
@@ -34,6 +36,10 @@ async def get_post(
     index: int,
     session: database.SessionDep
 ):
+    """
+    Через SELECT получаем конкретный пост
+    с идентификатором `index`.
+    """
     query = select(
         models.Post.post_id,
         models.User.username,
@@ -54,6 +60,9 @@ async def add_post(
     session: database.SessionDep,
     credentials: Annotated[dict, Depends(token_check)]
 ):
+    """
+    Добавляем новый пост в БД.
+    """
     new_post = models.Post(
         title=post.title,
         content=post.content,

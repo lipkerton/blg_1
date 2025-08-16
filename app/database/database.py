@@ -7,7 +7,7 @@ from app.config import settings
 from .models import Base
 
 
-engine = create_async_engine(settings.POSTGRES_URL)
+engine = create_async_engine(settings.postgres_url)
 
 async_session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)
 
