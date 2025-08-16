@@ -1,15 +1,22 @@
-import uvicorn
-from fastapi import FastAPI
+"""
+main.py
+"""
 from contextlib import asynccontextmanager
 
+import uvicorn
+from fastapi import FastAPI
+
+from app.database import database
 from app.homepage import homepage
 from app.post import post
 from app.user import user
-from app.database import database
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # pylint: disable=unused-argument, disable=redefined-outer-name
+    """
+    Инициализация БД при старте приложения.
+    """
     await database.setup_db()
     yield
 

@@ -68,7 +68,7 @@ async def token_check(
     из user-методов - она получает кредиты и отправляет
     токен на проверку.
     Если проверка прошла успешно, то функция возвращает
-    объект юзера из БД.
+    объект юзера из БД, пропущенный через Pydantic-схему.
     """
     unauthed_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
