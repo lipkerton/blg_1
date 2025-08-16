@@ -1,8 +1,11 @@
+"""
+Реализация базовой аутентификации для сервиса.
+"""
 from typing import Annotated
 
 from sqlalchemy import select, update
 from passlib.context import CryptContext
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from ..database import database, models
@@ -17,12 +20,19 @@ pwd_context = CryptContext(
 def verify_password(
     plain_password: str, hashed_password: str
 ) -> tuple[bool, str | None]:
+    """
+    Сверка сохранненого хэша 
+    и хэша только что введенного пароля.
+    """
     return pwd_context.verify_and_update(plain_password, hashed_password)
 
 
 def get_password_hash(
     password: str
 ) -> str:
+    """
+    Сделать хэш по паролю.
+    """
     return pwd_context.hash(password)
 
 
@@ -30,6 +40,13 @@ async def credentials_check(
     credentials: Annotated[HTTPBasicCredentials, Depends(security)],
     session: database.SessionDep,
 ):
+    """
+    Достаем хэш из БД и проверяем его
+    соответствие с введенным хэшем.
+    Если ранее для хэширования пароля в БД
+    был использован устаревший хэш, то
+    (при верифицированном пароле) обновляем хэш в БД.
+    """
     unauthed_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="invalid username or password",
