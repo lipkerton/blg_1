@@ -1,3 +1,8 @@
+"""
+Здесь хранится класс, который забирает
+секреты из `.env` и помогает создавать
+строки для подключения к БД и прч.
+"""
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -5,7 +10,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 load_dotenv()
 
 class Settings(BaseSettings):
+    """
+    Класс для хранения настроек проекта
+    в том числе для хранения секретов (из .env).
 
+    """
     POSTGRES_DB_HOST: str
     POSTGRES_DB_NAME: str
     POSTGRES_DB_USER: str
@@ -16,9 +25,15 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str
 
     @property
-    def POSTGRES_URL(self):
-        return f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASS}@{self.POSTGRES_DB_HOST}:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"
+    def postgres_url(self):
+        """
+        Ссылка для создания асинхронного движка.
+        """
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_DB_USER}:{self.POSTGRES_DB_PASS}"
+            f"@{self.POSTGRES_DB_HOST}:{self.POSTGRES_DB_PORT}/{self.POSTGRES_DB_NAME}"
+        )
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-settings: Settings = Settings()
+settings: Settings = Settings() # type: ignore

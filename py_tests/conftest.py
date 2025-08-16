@@ -85,7 +85,7 @@ async def session():
     """
     Создаем в фиксуре движок и делаем сессию.
     """
-    engine = create_async_engine(settings.POSTGRES_URL)
+    engine = create_async_engine(settings.postgres_url)
     async with engine.begin():
         async_session_maker = async_sessionmaker(
             bind=engine, expire_on_commit=False
