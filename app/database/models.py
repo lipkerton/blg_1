@@ -49,7 +49,7 @@ class Post(Base):
     title: Mapped[str] = mapped_column(String(150))
     content: Mapped[str] = mapped_column(Text())
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), 
+        TIMESTAMP(timezone=True),
         default=lambda: datetime.now(timezone.utc)
     )
 
