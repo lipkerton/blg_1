@@ -1,8 +1,12 @@
+"""
+Здесь я очень сильно старался сделать
+аутентификацию по JWT токену.
+"""
 from typing import Annotated
 from datetime import datetime, timezone, timedelta
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
 from app.config import settings
@@ -14,8 +18,14 @@ SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+CredentialsSecurity = Annotated[str, Depends(security)]
+
 
 def create_jwt_token(data: dict) -> str:
+    """
+    Создаем и возвращаем JWT токен из данных, которые
+    передаются из метода `/login`.
+    """
     expire = (
         datetime.now(timezone.utc)
         + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -28,6 +38,9 @@ def create_jwt_token(data: dict) -> str:
 
 
 def verify_jwt_token(jwt_token: str) -> dict | None:
+    """
+    Проверяем JWT токен.
+    """
     try:
         decoded_jwt_token = jwt.decode(
             jwt_token, SECRET_KEY, algorithms=[ALGORITHM]
@@ -45,14 +58,19 @@ def verify_jwt_token(jwt_token: str) -> dict | None:
 
 
 def token_check(
-    credentials: Annotated[str, Depends(security)]
+    credentials: CredentialsSecurity
 ):
+    """
+    Эта функция нужна, чтобы сделать зависимость с ней
+    из user-методов - она получает кредиты и отправляет
+    токен на проверку.
+    """
     unauthed_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="invalid or expired token",
         headers={"WWW-authenticate": "Bearer"}
     )
-    jwt_token = credentials.credentials
+    jwt_token = credentials.credentials  # type: ignore
     payload = verify_jwt_token(jwt_token)
     if payload:
         return payload
