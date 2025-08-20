@@ -199,9 +199,8 @@ def test_anon_delete_user():
     """
     Проверка доступ анонима (без токена) к DELETE `/user/{username}`.
     """
-    username_path_param = f"/{user.username}"
     response = requests.delete(
-        f"{socket.socket}{ENDPOINT}{username_path_param}",
+        f"{socket.socket}{ENDPOINT}",
         timeout=TIMEOUT
     )
     assert response.status_code == 403, (
@@ -216,9 +215,8 @@ def test_del_user():
     Это защищенный эндпоинт, поэтому к запросу
     добавляем токен, полученный на логине.
     """
-    username_path_param = f"/{user.username}"
     response = requests.delete(
-        f"{socket.socket}{ENDPOINT}{username_path_param}",
+        f"{socket.socket}{ENDPOINT}",
         headers={"Authorization": token.token},
         timeout=TIMEOUT
     )

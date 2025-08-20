@@ -101,18 +101,17 @@ async def add_user(
     await session.commit()
 
 
-@router.delete("/user/{username:str}")
+@router.delete("/user")
 async def delete_user(
-    username: str,
     session: database.SessionDep,
-    credentials: CredentialsToken  # pylint: disable=unused-argument
+    user: CredentialsToken
 ):
     """
     Удаляем пользователя с юзернеймом
     из параметра пути.
     """
     query = delete(models.User).where(
-        models.User.username == username
+        models.User.username == user.username  # type: ignore
     )
     await session.execute(query)
     await session.commit()

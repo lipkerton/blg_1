@@ -70,9 +70,8 @@ def make_user():
 
     yield
 
-    username_path_param = f"/{user.username}"
     response = requests.delete(
-        f"{socket.socket}{endpoint_user}{username_path_param}",
+        f"{socket.socket}{endpoint_user}",
         headers={"Authorization": token.token},
         timeout=TIMEOUT
     )
