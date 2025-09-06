@@ -7,11 +7,12 @@ from collections import namedtuple
 
 import pytest
 import requests
+from sqlalchemy import select
 
+from ..app.database import models
 from .conftest import (
     token, socket, TIMEOUT
 )
-
 
 ENDPOINT = "/p"
 Post = namedtuple("Post", ["title", "content"])
@@ -29,7 +30,9 @@ ERROR_USER_MESSAGE_INFO = (
     "response: {status_code}\n"
 )
 ERROR_POST_MESSAGE_INFO = (
-    "Status code: {status_code}"
+    f"title: {post.title}\n"
+    f"content: {post.content}\n"
+    "response: {status_code}"
 )
 
 @pytest.fixture(scope="module", autouse=True)
@@ -90,6 +93,21 @@ class TestPost:
     для создания пользователя.
     Еще я хотел попробовать использовать классы в тестах.
     """
+    @pytest.fixture(name="post_id")
+    async def get_post_id(self, session):
+        query = select(
+            models.Post.post_id
+        ).join(
+            models.User, models.Post.user_id == models.User.user_id
+        ).where(
+            models.User.username == user.username,
+            models.Post.content == post.content,
+            models.Post.title == post.title
+        )
+        result = await session.execute(query)
+        (post_id,) = result.one()
+        return post_id
+
     async def test_add_post(self):
         """
         Проверяем, что метод на добавление поста в БД
@@ -105,7 +123,48 @@ class TestPost:
             timeout=TIMEOUT
         )
         assert response.status_code == 200, (
-            "Не удалось добавить пост.\n",
+            "Не удалось добавить пост.\n" + \
+            ERROR_POST_MESSAGE_INFO.format(
+                status_code=response.status_code
+            )
+        )
+
+    async def test_get_post(self, post_id):
+        """
+        Проверяем, что метод на получение поста из БД
+        возвращает нужный статус код.
+        """
+        response = requests.get(
+            f"{socket.socket}{ENDPOINT}/{post_id}",
+            timeout=TIMEOUT
+        )
+        assert response.status_code == 200, (
+            "Не удалось получить пост.\n" + \
+            ERROR_POST_MESSAGE_INFO.format(
+                status_code=response.status_code
+            )
+        )
+        response_content = json.loads(response.text)
+        assert response_content["username"] == user.username, (
+            "Не удалось получить пост.\n"
+        )
+        assert response_content["title"] == post.title
+        assert response_content["content"] == post.content
+
+    async def test_delete_post(self, post_id):
+        """
+        Проверяем, что метод на удаление поста из БД
+        возвращает нужный статус-код.
+        """
+        response = requests.delete(
+            f"{socket.socket}{ENDPOINT}/{post_id}",
+            headers={
+                "Authorization": token.token
+            },
+            timeout=TIMEOUT
+        )
+        assert response.status_code == 200, (
+            f"Не удалось удалить пост {post_id}.\n" + \
             ERROR_POST_MESSAGE_INFO.format(
                 status_code=response.status_code
             )
