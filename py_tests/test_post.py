@@ -1,6 +1,8 @@
 """
 Тесты для проверки работы постов.
 1) Проверка на добавление поста.
+2) Проверка на чтение конкретного поста.
+3) Проверка на удаление поста.
 """
 import json
 from collections import namedtuple
@@ -13,6 +15,7 @@ from ..app.database import models
 from .conftest import (
     token, socket, TIMEOUT
 )
+
 
 ENDPOINT = "/p"
 Post = namedtuple("Post", ["title", "content"])
@@ -129,6 +132,22 @@ class TestPost:
             )
         )
 
+    async def test_get_posts(self):
+        """
+        Проверяем, что метод на получение всех постов из БД
+        возвращает нужный статус код.
+        """
+        response = requests.get(
+            f"{socket.socket}{ENDPOINT}",
+            timeout=TIMEOUT
+        )
+        assert response.status_code == 200, (
+            "Не удалось получить посты.\n" + \
+            ERROR_POST_MESSAGE_INFO.format(
+                status_code=response.status_code
+            )
+        )
+
     async def test_get_post(self, post_id):
         """
         Проверяем, что метод на получение поста из БД
@@ -146,10 +165,29 @@ class TestPost:
         )
         response_content = json.loads(response.text)
         assert response_content["username"] == user.username, (
-            "Не удалось получить пост.\n"
+            "В ответе указан неверный юзернейм.\n"
+            f"response username: {response_content['username']}\n"
+            f"initial username: {user.username}\n" + \
+            ERROR_POST_MESSAGE_INFO.format(
+                status_code=response.status_code
+            )
         )
-        assert response_content["title"] == post.title
-        assert response_content["content"] == post.content
+        assert response_content["title"] == post.title, (
+            "В ответе у поста неверный заголовок.\n"
+            f"response title: {response_content['title']}"
+            f"initial title: {post.title}\n" + \
+            ERROR_POST_MESSAGE_INFO.format(
+                status_code=response.status_code
+            )
+        )
+        assert response_content["content"] == post.content, (
+            "В ответе у поста неверное содержимое.\n"
+            f"response content: {response_content['content']}"
+            f"initial content: {post.content}\n" + \
+            ERROR_POST_MESSAGE_INFO.format(
+                status_code=response.status_code
+            )
+        )
 
     async def test_delete_post(self, post_id):
         """
