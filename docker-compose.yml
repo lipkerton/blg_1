@@ -7,7 +7,7 @@ services:
     networks:
       - blg_1_net
     ports:
-      - "8000:80"
+      - "8000:8000"
 
   database:
     image: postgres:latest
