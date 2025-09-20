@@ -11,7 +11,7 @@ from app.config import settings
 
 
 config = context.config
-postgresql_url_escaped = settings.POSTGRES_URL.replace('%', '%%')
+postgresql_url_escaped = settings.postgres_url.replace('%', '%%')
 config.set_main_option("sqlalchemy.url", f"{postgresql_url_escaped}")
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
