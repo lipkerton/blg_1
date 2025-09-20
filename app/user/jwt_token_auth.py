@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from sqlalchemy import select
 
-from app.config import settings
+from ..config import settings
 from .schemas import UserGetSchema
 from ..database import database, models
 

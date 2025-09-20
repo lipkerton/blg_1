@@ -6,10 +6,10 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from app.database import database
-from app.homepage import homepage
-from app.post import post
-from app.user import user
+from .app.database import database
+from .app.homepage import homepage
+from .app.post import post
+from .app.user import user
 
 
 # @asynccontextmanager

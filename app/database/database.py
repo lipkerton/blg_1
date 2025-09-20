@@ -3,7 +3,7 @@ from fastapi import Depends
 
 from typing import Annotated
 
-from app.config import settings
+from ..config import settings
 from .models import Base
 
 
