@@ -69,7 +69,7 @@ class Socket:
     """
     Класс для выдачи сокета.
     """
-    host = '127.0.0.1'
+    host = 'localhost'
     port = '8000'
 
     @property
