@@ -19,7 +19,7 @@ services:
     networks:
       - blg_1_net
     ports:
-      - "${POSTGRES_DB_PORT_HOST}:5432"
+      - "${POSTGRES_DB_PORT_HOST}:${POSTGRES_DB_PORT}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_DB_USER} -d ${POSTGRES_DB_NAME}"]
       interval: 30s
