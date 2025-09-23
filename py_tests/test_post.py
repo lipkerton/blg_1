@@ -98,6 +98,9 @@ class TestPost:
     """
     @pytest.fixture(name="post_id")
     async def get_post_id(self, session):
+        """
+        Фиксура обращается к БД для извлечения post_id.
+        """
         query = select(
             models.Post.post_id
         ).join(
