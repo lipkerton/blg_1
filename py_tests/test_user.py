@@ -225,7 +225,7 @@ def test_del_user():
 
     assert response.status_code == 200, (
         "Не удалось удалить пользователя.\n" + \
-        ERROR_MESSAGE_USER_INFO.format(status_code=response.response_code)
+        ERROR_USER_MESSAGE_INFO.format(status_code=response.response_code)
     )
 
 
