@@ -1,0 +1,10 @@
+build:
+  stage: build
+  script:
+    - docker-compose up -d
+    - docker exec blog-blog_1-1 alembic upgrade head
+
+test:
+  stage: test
+  script:
+    - docker exec blog-blog_1-1 pytest py_tests/
