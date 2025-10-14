@@ -1,9 +1,8 @@
 pipeline {
-    agent { docker { image 'python:3.13-slim' } }
     stages {
-        stage('build') {
+        stage('hello') {
             steps {
-                sh 'python --version'
+	    	echo 'hello world!'
             }
         }
     }
