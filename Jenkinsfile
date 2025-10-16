@@ -2,12 +2,12 @@ pipeline {
     agent any
     stages {
         stage('hello') {
-	    echo_begin_stage()
             steps {
+	    	echo_begin_stage()
 	    	echo 'hello world!'
+		echo "Building ${env.JOB_NAME}"
             }
         }
-	echo "Building ${env.JOB_NAME}"
     }
 }
 
