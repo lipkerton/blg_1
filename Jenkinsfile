@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label "linux"
+        label "мастер"
     }
     stages {
         stage('hello') {
