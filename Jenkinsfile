@@ -1,18 +1,12 @@
 pipeline {
-    agent any
+    agent {
+        label "linux && docker"
+    }
     stages {
         stage('hello') {
             steps {
-	    	echo_begin_stage()
-	    	echo 'hello world!'
-		echo "Building ${env.JOB_NAME}"
+	    	    echo "hello world!"
             }
         }
     }
-}
-
-
-def echo_begin_stage() {
-    last = env.STAGE_NAME
-    echo "---------------------{$last}---------------------"
 }
