@@ -33,7 +33,7 @@ pipeline {
                     int timer = 60
                     timeout(time: timer, unit: "MINUTES") {
                         sh """#!/bin/bash
-                            docker exec blog-blog_1-1 pytest py_tests/
+                            docker exec blog-blg_1-1 pytest py_tests/
                         """
                     }
                 }
