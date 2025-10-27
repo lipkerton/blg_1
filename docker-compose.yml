@@ -1,6 +1,7 @@
 services:
   blg_1:
     image: lipkerton/blog_1:v1.1
+    container_name: blog-blg_1-1
     depends_on:
       database:
         condition: service_healthy
@@ -20,7 +21,7 @@ services:
     networks:
       - blg_1_net
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     ports:
       - "127.0.0.1:${POSTGRES_DB_PORT_HOST}:${POSTGRES_DB_PORT}"
     healthcheck:
