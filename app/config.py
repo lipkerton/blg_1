@@ -3,6 +3,8 @@
 секреты из `.env` и помогает создавать
 строки для подключения к БД и прч.
 """
+from pathlib import Path
+
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +25,9 @@ class Settings(BaseSettings):
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
+
+    BASE_DIR: Path = Path('.').absolute()
+    TEMPLATES_DIR: Path = BASE_DIR / "app/templates"
 
     @property
     def postgres_url(self):
