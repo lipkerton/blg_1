@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
     BASE_DIR: Path = Path('.').absolute()
     TEMPLATES_DIR: Path = BASE_DIR / "app/templates"
+    STATIC_DIR: Path = BASE_DIR / "app/static"
 
     @property
     def postgres_url(self):

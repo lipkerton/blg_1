@@ -6,7 +6,20 @@
         </title>
         <meta charset="utf-8" >
         <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>  
+        <script src="{{ url_for('static', path='/js/bootstrap.js') }}"></script>
+        <script src="{{ url_for('static', path='/js/post.js')}}"></script>
+        <link rel="stylesheet" href="{{ url_for('static', path='/css/bootstrap.min.css') }}">
+        <style>
+            body {
+                background-color: rgb(255, 243, 232);
+            }
+            .left-column {
+                position: sticky;
+                top: 20px;
+                height: fit-content;
+            }
+        </style>
+    </head>
     <body>
         {% include '/includes/header.html' %}
         {% block content %}{% endblock %}

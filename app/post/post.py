@@ -58,13 +58,6 @@ async def get_posts(
             for post in result
         ]
     }
-    # context = {
-    #     "post": {
-    #         "title": result.title,
-    #         "content": result.content,
-    #         "user": result.username
-    #     }
-    # }
     return templates.TemplateResponse(
         request=request, name="blog/board.html", context=context
     )
