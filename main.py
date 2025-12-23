@@ -2,10 +2,13 @@
 main.py
 """
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
+from app.config import settings
 from app.homepage import homepage
 from app.post import post
 from app.user import user
+
 
 
 # @asynccontextmanager
@@ -21,6 +24,8 @@ app = FastAPI()
 app.include_router(homepage.router)
 app.include_router(post.router)
 app.include_router(user.router)
+
+app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 
 
 # if __name__ == "__main__":
