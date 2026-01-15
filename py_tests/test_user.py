@@ -13,10 +13,11 @@ from collections import namedtuple
 
 import pytest
 import requests
-from sqlalchemy import text
+from sqlalchemy import text, delete
 from sqlalchemy.exc import NoResultFound
 
 from .conftest import TIMEOUT, password, token, socket
+from ..app.database import models
 
 
 pytestmark = pytest.mark.user
@@ -39,11 +40,10 @@ async def get_db_user(session):
     Фиксура должна отдавать пользователя из БД.
     """
     query = f"""
-        select username, password, email, is_active from users
+        select username, password, email from users
         where
             username = '{user.username}'
             and email = '{user.email}'
-            and is_active = False;
     """
     result = await session.execute(text(query))
     yield result
@@ -226,19 +226,30 @@ def test_del_user():
 
     assert response.status_code == 200, (
         "Не удалось удалить пользователя.\n" + \
-        ERROR_USER_MESSAGE_INFO.format(status_code=response.response_code)
+        ERROR_USER_MESSAGE_INFO.format(status_code=response.status_code)
     )
 
 
-def test_check_deleted_user_db(db_user):
+async def test_check_deleted_user_db(session):
     """
-    Проверяем, что пользователь удалился из БД.
+    Проверяем, что статус is_active пользователя поменялся на False.
     """
+    query = f"""
+        select username, password, email from users
+        where
+            username = '{user.username}'
+            and email = '{user.email}'
+            and is_active = False
+    """
+    result = await session.execute(text(query))
     try:
-        db_user.one()
+        result.one()
+        query = delete(models.User).where(
+            models.User.username == user.username
+        )
+        await session.execute(query)
+        await session.commit()
     except NoResultFound:
-        pass
-    else:
         raise AssertionError(
-            f"После удаления данные пользователя в БД: {db_user}."
+            f"После удаления статус пользователя не поменялся: {result}."
         )

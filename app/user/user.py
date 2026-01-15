@@ -9,7 +9,7 @@
 """
 from typing import Annotated
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, update
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBasicCredentials
 
