@@ -39,10 +39,11 @@ async def get_db_user(session):
     Фиксура должна отдавать пользователя из БД.
     """
     query = f"""
-        select username, password, email from users
+        select username, password, email, is_active from users
         where
             username = '{user.username}'
-            and email = '{user.email}';
+            and email = '{user.email}'
+            and is_active = False;
     """
     result = await session.execute(text(query))
     yield result
