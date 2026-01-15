@@ -1,6 +1,6 @@
 services:
   blg_1:
-    image: lipkerton/blog_1:v1.1
+    image: lipkerton/blog_1:v1.2
     container_name: blog-blg_1-1
     depends_on:
       database:
