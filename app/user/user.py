@@ -9,7 +9,7 @@
 """
 from typing import Annotated
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, update
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBasicCredentials
 
@@ -110,8 +110,8 @@ async def delete_user(
     Удаляем пользователя с юзернеймом
     из параметра пути.
     """
-    query = delete(models.User).where(
+    query = update(models.User).where(
         models.User.username == user.username  # type: ignore
-    )
+    ).values(is_active=False)
     await session.execute(query)
     await session.commit()

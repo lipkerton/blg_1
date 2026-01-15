@@ -9,8 +9,10 @@ from collections import namedtuple
 
 import pytest
 import requests
-from sqlalchemy import select
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
+from ..app.config import settings
 from ..app.database import models
 from .conftest import (
     token, socket, TIMEOUT
@@ -39,7 +41,7 @@ ERROR_POST_MESSAGE_INFO = (
 )
 
 @pytest.fixture(scope="module", autouse=True)
-def make_user():
+async def make_user():
     """
     Делаем перед началом тестирование юзера,
     а потом его удаляем.
@@ -87,7 +89,19 @@ def make_user():
             status_code=response.status_code
         )
     )
+    engine = create_async_engine(settings.postgres_url)
+    async with engine.begin():
+        async_session_maker = async_sessionmaker(
+            bind=engine, expire_on_commit=False
+        )
+        async with async_session_maker() as session:
+            query = delete(models.User).where(
+                models.User.username == user.username
+            )
+            await session.execute(query)
+            await session.commit()
 
+    
 
 class TestPost:
     """

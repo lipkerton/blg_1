@@ -1,3 +1,5 @@
+import { templateLoader } from "./template-loader";
+
 let postModal = null;
 document.addEventListener('DOMContentLoaded', function() {
     // Инициализируем модальное окно Bootstrap
@@ -65,8 +67,6 @@ async function publishPost() {
 
     showLoading(true);
 
-    const jwtToken = getJWTToken();
-
     const postData = {
         title: title,
         content: content
@@ -76,7 +76,6 @@ async function publishPost() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwtToken}`
             },
             body: JSON.stringify(postData)
         });
@@ -99,7 +98,10 @@ async function publishPost() {
     } finally {
         showLoading(false);
     }
-    
+}
+function validateForm(title, content) {
+    const formMessage = document.getElementById('formMessage');
+    formMessage.classList.add('d-none');   
     // валидация
     if (!title) {
         showFormMessage('cant be empty', 'danger');
@@ -148,8 +150,24 @@ function showLoading(isLoading) {
     const publishBtn = document.getElementById('publishBtn');
 
     if (isLoading) {
+        btnText.textContent = 'publishing...';
         loadingElement.classList.remove('d-none');
         publishBtn.disabled = true;
-        
+    } else {
+        btnText.textContent = 'post';
+        loadingElement.classList.add('d-none');
+        publishBtn.disabled = false;
     }
+}
+function clearForm() {
+    document.getElementById('postForm').reset();
+    document.getElementById('titleCounter').textContent = '0';
+    document.getElementById('contentCounter').textContent = '0';
+    document.getElementById('formMessage').classList.add('d-none');
+
+    document.getElementById('postTitle').classList.remove('is-invalid');
+    document.getElementById('postContent').classList.remove('is-invalid');
+}
+function addPostToFeed(post) {
+    const postsContainer = document.getElementById('posts-container');
 }
